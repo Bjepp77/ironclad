@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0a0d12">
+<title>IRONCLAD - Strength + Size Hybrid</title>
+<style>
+:root{--bg:#0a0d12;--panel:#10151d;--panel2:#151c26;--line:#26303e;--ink:#e8eef5;--dim:#93a3b5;--steel:#5fb4ff;--steel2:#9fd6ff;--good:#7cf29c;--bad:#ff5d5d}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;padding:14px 12px 110px;background-image:radial-gradient(circle at 50% 0%, #14202e 0%, var(--bg) 65%)}
+h1{font-size:22px;letter-spacing:2px;color:var(--steel);text-shadow:0 0 18px rgba(95,180,255,.35)}
+.sub{color:var(--dim);font-size:12px;margin-top:2px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:12px}
+.panel .pt{font-size:11px;letter-spacing:1.5px;color:var(--steel2);margin-bottom:6px}
+.panel p{font-size:12px;color:var(--dim);line-height:1.7}
+.daybtn{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px;color:var(--ink);cursor:pointer}
+.daybtn .dt{font-weight:700;font-size:15px}
+.daybtn .dd{color:var(--dim);font-size:11px;margin-top:2px}
+.daybtn .arrow{color:var(--steel);font-size:18px}
+.restday{border-style:dashed;opacity:.75}
+.daynum{font-size:10px;color:var(--steel2);letter-spacing:1.5px}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px}
+.card .exname{font-weight:700;font-size:14px}
+.card .anchortag{font-size:10px;color:var(--steel2);margin-left:6px;letter-spacing:1px}
+.chips{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.chip{font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:3px 9px}
+.chip.hot{color:var(--steel2);border-color:var(--steel)}
+.setsrow{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.setbtn{min-width:52px;padding:8px 6px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--dim);font-size:11px;text-align:center;cursor:pointer}
+.setbtn.done{background:var(--steel);border-color:var(--steel);color:#08131f;font-weight:700}
+.setbtn .sr{font-size:9px;display:block;font-weight:400}
+.logrow{display:flex;gap:6px;margin-top:8px}
+.logrow input{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:8px;font-size:13px;text-align:center;min-width:0}
+.cue{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);color:var(--dim);font-size:11px;line-height:1.5}
+.vlink{display:inline-block;margin-top:6px;font-size:11px;color:var(--steel2);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px}
+#timerbar{position:fixed;left:0;right:0;bottom:0;background:#0d1219;border-top:2px solid var(--steel);padding:10px 14px 16px;display:none;z-index:50}
+#timerbar.on{display:block}
+#tcount{font-size:30px;font-weight:800;color:var(--steel);text-align:center;font-variant-numeric:tabular-nums}
+.tpresets{display:flex;gap:8px;justify-content:center;margin-top:6px;flex-wrap:wrap}
+.tpresets button{background:var(--panel);border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer}
+.tpresets button.on{border-color:var(--steel);color:var(--steel)}
+#tlabel{text-align:center;color:var(--dim);font-size:11px;margin-top:2px}
+.backlink{background:none;border:none;color:var(--dim);font-size:13px;text-decoration:underline;padding:12px;cursor:pointer}
+.volnote{color:var(--dim);font-size:10px;margin-top:14px;line-height:1.5;text-align:center}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="timerbar">
+  <div id="tcount">180</div>
+  <div id="tlabel">REST - tap time to pause</div>
+  <div class="tpresets">
+    <button data-t="90">90s</button><button data-t="120">2:00</button><button data-t="180" class="on">3:00</button><button data-t="300">5:00</button><button id="tstop">SKIP</button>
+  </div>
+</div>
+<script>
+/* ============ IRONCLAD program data (original composition) ============ */
+const DAYS = [
+{id:'d1', num:'DAY 1', name:'LOWER STRENGTH', desc:'Squat anchor + hinge support', ex:[
+  {n:'Barbell Back Squat (comp stance)', anchor:true, top:{sets:2,r:'3-5'}, sets:2, r:'5-6', bo:true, rest:180, rir:'RPE 9 CAP', v:'backsquat', cue:'Brace hard, sit between the hips, drive the floor away. Top sets are heavy but never grinders - cap at RPE 9.'},
+  {n:'Romanian Deadlift', sets:3, r:'5-7', rest:150, rir:'1-2 RIR', v:'rdl', cue:'Soft knees, hips back, bar slides down the thighs. Feel the hamstrings load - this is hinge strength for the deadlift, not a stretch contest.'},
+  {n:'Leg Extension', sets:2, r:'10-15', rest:90, rir:'1-2 RIR', v:'legext', cue:'One-second squeeze at the top. Low-fatigue quad volume that leaves the squat alone.'},
+  {n:'Standing Calf Raise', sets:3, r:'6-10', rest:90, rir:'1-2 RIR', v:'standingcalf', cue:'Straight knee, full stretch, full squeeze. Heavy is fine here.'}]},
+{id:'d2', num:'DAY 2', name:'UPPER STRENGTH', desc:'Bench anchor + heavy pull/press', ex:[
+  {n:'Flat Barbell Bench Press', anchor:true, top:{sets:2,r:'3-5'}, sets:2, r:'5-6', bo:true, rest:180, rir:'RPE 9 CAP', v:'benchpress', cue:'Legs drive, upper back tight, bar to the lower chest. Same rule as squat: heavy, clean, never a grind.'},
+  {n:'Barbell Bent-Over Row (heavy)', sets:3, r:'6-8', rest:150, rir:'1-2 RIR', v:'bentrow', cue:'Torso near parallel, pull to the belly, no heaving. The horizontal anchor that balances all the pressing.'},
+  {n:'Standing Barbell Overhead Press', sets:3, r:'5-7', rest:150, rir:'1-2 RIR', v:'barbellohp', cue:'Squeeze the glutes, ribs down, press the bar back over the ears. The fourth anchor - treat it like one.'},
+  {n:'Barbell Curl (heavy)', sets:2, r:'6-8', rest:90, rir:'1-2 RIR', v:'barbellcurl', cue:'Elbows pinned, no swing. Heavy arm work on a strength day keeps weekly biceps honest.'}]},
+{id:'d3', num:'DAY 3', name:'REST', desc:'Grow day. Walk, eat protein, sleep.', rest:true},
+{id:'d4', num:'DAY 4', name:'LOWER HYPERTROPHY', desc:'Machine quad/ham volume', ex:[
+  {n:'Hack Squat Machine', sets:3, r:'8-12', rest:120, rir:'1-2 RIR', v:'hacksquat', cue:'Full depth, drive through the whole foot. Stable and loadable - safe to take near failure.'},
+  {n:'Seated Leg Curl', sets:3, r:'10-15', rest:90, rir:'1-2 RIR', v:'seatedcurl', cue:'Hip-flexed position trains the hamstrings lengthened - the best-supported hamstring builder. Own the negative.'},
+  {n:'Barbell Hip Thrust', sets:3, r:'8-12', rest:120, rir:'1-2 RIR', v:'hipthrust', cue:'Chin tucked, ribs down, lock out with the glutes - not the lower back.'},
+  {n:'Bulgarian Split Squat', sets:2, r:'10-12 /leg', rest:90, rir:'1-2 RIR', v:'bulgarian', cue:'Long stride, torso tall, drop straight down. Unilateral loading at long muscle length.'},
+  {n:'Seated Calf Raise', sets:3, r:'10-15', rest:90, rir:'1-2 RIR', v:'seatedcalf', cue:'Bent knee hits the soleus - the complement to Day 1 straight-knee work. Pause at the bottom.'}]},
+{id:'d5', num:'DAY 5', name:'UPPER HYPERTROPHY', desc:'Chest/back/delts/arms volume', ex:[
+  {n:'Low Incline Dumbbell Press (15-30)', sets:3, r:'8-12', rest:120, rir:'1-2 RIR', v:'inclinedb', cue:'Low incline, deep stretch, press up and slightly in. The clavicular-pec builder with full DB range.'},
+  {n:'Seated Cable Row (neutral)', sets:3, r:'10-12', rest:90, rir:'1-2 RIR', v:'cablerow', cue:'Chest tall, pull to the lower ribs, one-second squeeze. Low-fatigue volume next to the heavy rows.'},
+  {n:'Seated Dumbbell Overhead Press', sets:3, r:'8-12', rest:120, rir:'1-2 RIR', v:'dbohp', cue:'Full range, controlled negative. Hypertrophy-range pressing after the strength-day barbell work.'},
+  {n:'Single-Arm Cable Lateral Raise', sets:3, r:'12-20', rest:60, rir:'1-2 RIR', v:'cablelatraise', cue:'Cable behind the back, lead with the elbow, stop at shoulder height. Constant tension the whole way.'},
+  {n:'Reverse Pec Deck', sets:2, r:'12-15', rest:60, rir:'1-2 RIR', v:'revpecdeck', cue:'Rear delts, not traps. Shoulders down, sweep wide.'},
+  {n:'Face-Away Bayesian Cable Curl', sets:2, r:'12-15', rest:60, rir:'1-2 RIR', v:'bayesiancurl', cue:'Face away, arm behind you - the lengthened position is where the growth lives.'},
+  {n:'Cable Rope Pushdown', sets:2, r:'10-15', rest:60, rir:'1-2 RIR', v:'pushdown', cue:'Elbows pinned, split the rope at the bottom. Low-fatigue triceps after two pressing days.'}]},
+{id:'d6', num:'DAY 6-7', name:'REST + REST', desc:'Two full days. The wave reloads Monday.', rest:true}
+];
+/* videos: neutral third-party, high-production (filled from curated scrape) */
+const VIDEOS = {
+"abwheel":"https://www.youtube.com/watch?v=A3uK5TPzHq8",
+"backext":"https://www.youtube.com/watch?v=-MTjHC3NC2s",
+"backsquat":"https://www.youtube.com/watch?v=-bJIpOq-LWk",
+"barbellcurl":"https://www.youtube.com/watch?v=ZQWL7omZh94",
+"barbellohp":"https://www.youtube.com/watch?v=RoY7aG94X_Y",
+"bayesiancurl":"https://www.youtube.com/watch?v=4O24gFksZ04",
+"benchpress":"https://www.youtube.com/watch?v=rT7DgCr-3pg",
+"bentrow":"https://www.youtube.com/watch?v=qXrTDQG1oUQ",
+"bulgarian":"https://www.youtube.com/watch?v=hiLF_pF3EJM",
+"cablelatraise":"https://www.youtube.com/watch?v=J-6uEOkYAKM",
+"cablerow":"https://www.youtube.com/watch?v=vwHG9Jfu4sw",
+"dbbench":"https://www.youtube.com/watch?v=O7ECGhZj_Hc",
+"dblatraise":"https://www.youtube.com/watch?v=S7Bjyw2ccg0",
+"dbohp":"https://www.youtube.com/watch?v=rO_iEImwHyo",
+"deadlift":"https://www.youtube.com/watch?v=GxsLrTzyGUU",
+"dips":"https://www.youtube.com/watch?v=wNDqWE_GnOw",
+"ezcurl":"https://www.youtube.com/watch?v=kwG2ipFRgfo",
+"facepull":"https://www.youtube.com/watch?v=WVq3JRs41dY",
+"goblet":"https://www.youtube.com/watch?v=gCESNsDsbqk",
+"hacksquat":"https://www.youtube.com/watch?v=0tn5K9NlCfo",
+"hipthrust":"https://www.youtube.com/watch?v=5S8SApGU_Lk",
+"inclinedb":"https://www.youtube.com/watch?v=IP4oeKh1Sd4",
+"latraise":"https://www.youtube.com/watch?v=NNAs8jx_zJI",
+"legext":"https://www.youtube.com/watch?v=YyvSfVjQeL0",
+"lyingcurl":"https://www.youtube.com/watch?v=jxctD6fL_FQ",
+"machpress":"https://www.youtube.com/watch?v=3R14MnZbcpw",
+"pallof":"https://www.youtube.com/watch?v=QGrE4L2o4J0",
+"pullup":"https://www.youtube.com/watch?v=gx0RWT7WbmA",
+"pushdown":"https://www.youtube.com/watch?v=n2FSCB4vRSA",
+"rdl":"https://www.youtube.com/watch?v=7j-2w4-P14I",
+"revpecdeck":"https://www.youtube.com/watch?v=v0rJuhEa59c",
+"ropecrunch":"https://www.youtube.com/watch?v=jBtiDLz0y7s",
+"sealrow":"https://www.youtube.com/watch?v=tvk5Fb2K0Ns",
+"seatedcalf":"https://www.youtube.com/watch?v=BxfKOyI8sUg",
+"seatedcurl":"https://www.youtube.com/watch?v=t9sTSr-JYSs",
+"skullcrusher":"https://www.youtube.com/watch?v=NIWKqcmpBug",
+"standingcalf":"https://www.youtube.com/watch?v=Km0QS46bTEA",
+"straightarm":"https://www.youtube.com/watch?v=WDOV2PDpkiU",
+"yraise":"https://www.youtube.com/watch?v=oDSGrucETfw"
+};
+const LS_KEY = 'forge.ironclad.v1';
+
+/* ============ state ============ */
+function load(){try{return JSON.parse(localStorage.getItem(LS_KEY))||{}}catch(e){return{}}}
+function save(s){localStorage.setItem(LS_KEY,JSON.stringify(s))}
+let S = load();
+function dayLog(did){S.days=S.days||{};S.days[did]=S.days[did]||{};return S.days[did]}
+
+/* ============ views ============ */
+const app=document.getElementById('app');
+function home(){
+  app.innerHTML='<h1>IRONCLAD</h1><div class="sub">STRENGTH + SIZE HYBRID - 5 days, built like armor</div>'
+  +'<div class="panel"><div class="pt">HOW IT PROGRESSES</div><p>Anchors (squat, bench): when both top sets hit the top of the range, add 2.5-5 lb next week - waves build every 3 weeks. Hypertrophy work: double progression - top the rep range on every set, then add weight. Same weight stalled two sessions in a row? Take a light week.</p></div>'
+  + DAYS.map((d,i)=>'<button class="daybtn'+(d.rest?' restday':'')+'" data-i="'+i+'"><div><div class="daynum">'+d.num+'</div><div class="dt">'+d.name+'</div><div class="dd">'+d.desc+'</div></div><span class="arrow">&#9654;</span></button>').join('')
+  +'<div class="volnote">2 strength days + 2 hypertrophy days + 3 rest days. Quads 11, back 12+, chest 9-10, glutes 9-10 direct sets/week.<br>Missed a day? The program just resumes where you left off.</div>';
+  app.querySelectorAll('.daybtn').forEach(b=>b.onclick=()=>day(+b.dataset.i));
+}
+function day(i){
+  const d=DAYS[i];
+  if(d.rest){app.innerHTML='<h1>REST DAY</h1><div class="sub">The iron cools so it can harden.</div><div class="panel"><p style="line-height:1.7;font-size:13px">Walk 8-10k steps. Hit your protein. Sleep like it is your job.<br><br>Five hard days only work if the two easy ones actually happen.</p></div><button class="backlink" id="bk">&lt; BACK</button>';document.getElementById('bk').onclick=home;return;}
+  const log=dayLog(d.id);
+  let h='<h1>'+d.name+'</h1><div class="sub">'+d.num+' - '+d.desc+'</div>';
+  d.ex.forEach((ex,xi)=>{
+    const key='x'+xi;
+    const done=(log[key]&&log[key].sets)||[];
+    const nSets=(ex.top?ex.top.sets:0)+ex.sets;
+    h+='<div class="card"><div><span class="exname">'+ex.n+'</span>'+(ex.anchor?'<span class="anchortag">ANCHOR</span>':'')+'</div>'
+    +'<div class="chips">'
+    +(ex.top?'<span class="chip hot">TOP '+ex.top.sets+' x '+ex.top.r+'</span><span class="chip">BACKOFF '+ex.sets+' x '+ex.r+'</span>':'<span class="chip hot">'+ex.sets+' x '+ex.r+' REPS</span>')
+    +'<span class="chip">'+ex.rir+'</span><span class="chip">REST '+(ex.rest>=120?(ex.rest/60)+' MIN':ex.rest+'s')+'</span></div>'
+    +'<div class="setsrow">'+Array.from({length:nSets},(_,s)=>{
+      const lbl=ex.top?(s<ex.top.sets?'TOP '+(s+1):'BO '+(s-ex.top.sets+1)):'SET '+(s+1);
+      return '<button class="setbtn'+(done[s]?' done':'')+'" data-k="'+key+'" data-s="'+s+'" data-r="'+ex.rest+'">'+lbl+'<span class="sr">'+(done[s]?done[s].w+'x'+done[s].r:'tap')+'</span></button>';
+    }).join('')+'</div>'
+    +'<div class="logrow"><input id="w-'+key+'" inputmode="decimal" placeholder="lb"><input id="r-'+key+'" inputmode="numeric" placeholder="reps"></div>'
+    +'<div class="cue">'+ex.cue+'</div>'
+    +(VIDEOS[ex.v]?'<a class="vlink" href="'+VIDEOS[ex.v]+'" target="_blank" rel="noopener">&#9654; FORM VIDEO</a>':'')
+    +'</div>';
+  });
+  h+='<div style="text-align:center"><button class="backlink" id="bk">&lt; BACK TO WEEK</button></div>';
+  app.innerHTML=h;
+  document.getElementById('bk').onclick=home;
+  app.querySelectorAll('.setbtn').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.k, s=+b.dataset.s;
+    log[k]=log[k]||{sets:[]};
+    if(log[k].sets[s]){delete log[k].sets[s];}
+    else{
+      const w=parseFloat(document.getElementById('w-'+k).value)||0;
+      const r=parseInt(document.getElementById('r-'+k).value)||0;
+      log[k].sets[s]={w:w,r:r};
+    }
+    save(S); startTimer(+b.dataset.r); day(i);
+  });
+}
+
+/* ============ rest timer ============ */
+let tInt=null,tLeft=180;
+function startTimer(sec){
+  tLeft=sec; const bar=document.getElementById('timerbar');bar.classList.add('on');
+  clearInterval(tInt); tick();
+  tInt=setInterval(()=>{tLeft--; tick(); if(tLeft<=0){clearInterval(tInt); bar.classList.remove('on'); if(navigator.vibrate)navigator.vibrate(200);}},1000);
+}
+function tick(){const m=Math.floor(tLeft/60),s=tLeft%60;document.getElementById('tcount').textContent=(tLeft>=60)?m+':'+String(s).padStart(2,'0'):tLeft;}
+document.querySelectorAll('.tpresets button[data-t]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tpresets button[data-t]').forEach(x=>x.classList.remove('on'));b.classList.add('on');startTimer(+b.dataset.t);
+});
+document.getElementById('tstop').onclick=()=>{clearInterval(tInt);document.getElementById('timerbar').classList.remove('on');};
+document.getElementById('tcount').onclick=()=>{if(tInt){clearInterval(tInt);tInt=null;}else if(tLeft>0){startTimer(tLeft);}};
+
+home();
+</script>
+</body>
+</html>
