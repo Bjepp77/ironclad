@@ -12,6 +12,7 @@
 body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;padding:14px 12px 110px;background-image:radial-gradient(circle at 50% 0%, #14202e 0%, var(--bg) 65%)}
 h1{font-size:22px;letter-spacing:2px;color:var(--steel);text-shadow:0 0 18px rgba(95,180,255,.35)}
 .sub{color:var(--dim);font-size:12px;margin-top:2px}
+.heroImg{height:190px;border-radius:14px;background:url('deadlift-setup.jpg') center 30%/cover no-repeat;margin-top:12px;border:1px solid var(--line)}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:12px}
 .panel .pt{font-size:11px;letter-spacing:1.5px;color:var(--steel2);margin-bottom:6px}
 .panel p{font-size:12px;color:var(--dim);line-height:1.7}
@@ -139,6 +140,7 @@ function dayLog(did){S.days=S.days||{};S.days[did]=S.days[did]||{};return S.days
 const app=document.getElementById('app');
 function home(){
   app.innerHTML='<h1>IRONCLAD</h1><div class="sub">STRENGTH + SIZE HYBRID - 5 days, built like armor</div>'
+  +'<div class="heroImg"></div>'
   +'<div class="panel"><div class="pt">HOW IT PROGRESSES</div><p>Anchors (squat, bench): when both top sets hit the top of the range, add 2.5-5 lb next week - waves build every 3 weeks. Hypertrophy work: double progression - top the rep range on every set, then add weight. Same weight stalled two sessions in a row? Take a light week.</p></div>'
   + DAYS.map((d,i)=>'<button class="daybtn'+(d.rest?' restday':'')+'" data-i="'+i+'"><div><div class="daynum">'+d.num+'</div><div class="dt">'+d.name+'</div><div class="dd">'+d.desc+'</div></div><span class="arrow">&#9654;</span></button>').join('')
   +'<div class="volnote">2 strength days + 2 hypertrophy days + 3 rest days. Quads 11, back 12+, chest 9-10, glutes 9-10 direct sets/week.<br>Missed a day? The program just resumes where you left off.</div>';
