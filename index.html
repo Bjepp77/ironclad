@@ -188,7 +188,7 @@ a{color:var(--salmon)}
 <div class="toast" id="toast"></div>
 <script>window.__HERO__='deadlift-setup.jpg';</script>
 <script>
-// ===== IRONCLAD - PROGRAM DATA (original Forge program) =====
+// ===== IRONCLAD - PROGRAM DATA (original SwoleQuest program) =====
 // Exercise schema: n=name, w=warmup sets, s=working sets, r=reps, p=%1RM string, rpe, rest, note,
 // l=1RM lift key (squat/bench/deadlift/ohp), top=top set flag, opt=optional, vars=[{label,v,note}], v=video key, sup=superset/circuit label
 const V = {
@@ -2774,7 +2774,7 @@ function chartSVG(name){
     '<path d="'+line+'" fill="none" stroke="#c8262b" stroke-width="2.5"/>'+dots+'</svg>';
 }
 
-function R(c,t){return '<a class="ref" href="https://bjepp77.github.io/forge-hub/#university" target="_blank" rel="noopener" title="'+t+' - read the paper at Forge University">'+c+' &#8599;</a>';}
+function R(c,t){return '<a class="ref" href="https://bjepp77.github.io/forge-hub/#university" target="_blank" rel="noopener" title="'+t+' - read the paper at SwoleQuest University">'+c+' &#8599;</a>';}
 // --- GUIDE ---
 function renderGuide(){
   const el=document.getElementById('guideBody');
@@ -2796,13 +2796,13 @@ function renderGuide(){
 function renderMore(){
   const el=document.getElementById('moreBody');
   let h='<div class="pagetop" style="padding:0 0 4px"><h2>The Program</h2><span class="sub">About the program</span></div>';
-  h+='<div class="quote">IRONCLAD is an original Forge program.</div>';
+  h+='<div class="quote">IRONCLAD is an original SwoleQuest program.</div>';
   h+='<div class="divider"></div><div class="kicker">Evidence pillars</div>';
   h+='<div class="quote">Heavy, clean, capped. The grind is where strength practice dies.</div>';
   h+='<div class="quote">Strength is specific to load - the top set is the point. '+R('LOADS','Schoenfeld 2017 - low vs high load')+'</div>';
   h+='<div class="quote">Slow warmups = lighter day. That\'s the system working, not you failing. '+R('RPE-USE','Helms 2016 - programming with RIR/RPE')+'</div>';
   h+='<div class="quote">Hypertrophy days feed the strength days. More muscle, bigger ceiling. '+R('TENSION','Schoenfeld 2010 - mechanisms of hypertrophy')+'</div></div>';
-  h+='<a class="btn ghost" href="https://bjepp77.github.io/forge-hub/#university" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:10px;text-decoration:none">Read the research - Forge University &#8599;</a>';
+  h+='<a class="btn ghost" href="https://bjepp77.github.io/forge-hub/#university" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:10px;text-decoration:none">Read the research - SwoleQuest University &#8599;</a>';
   // settings
   const s=state.set;
   h+='<div class="pagetop" style="padding:18px 0 4px"><h2>Settings</h2></div>';
