@@ -2381,7 +2381,9 @@ const PROGRAM = [
 </script>
 <script>
 // ===== APP =====
-const LS='forge.ironclad.v1';
+const LS='swolequest.ironclad.v1';
+/* one-time key migration: forge.* -> swolequest.* (2026-09-11 rename) */
+try{const _o='forge.ironclad.v1',_v=localStorage.getItem(_o);if(_v!==null){if(localStorage.getItem(LS)===null)localStorage.setItem(LS,_v);localStorage.removeItem(_o);}}catch(e){}
 let state=load();
 function load(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.v===1)return s;}catch(e){}
   return {v:1,pos:0,done:{},draft:{},lastByEx:{},history:[],vars:{},set:{unit:'lb',w10:'10A',rm:{squat:'',bench:'',deadlift:'',ohp:''}}};}
@@ -2774,7 +2776,7 @@ function chartSVG(name){
     '<path d="'+line+'" fill="none" stroke="#c8262b" stroke-width="2.5"/>'+dots+'</svg>';
 }
 
-function R(c,t){return '<a class="ref" href="https://bjepp77.github.io/forge-hub/#university" target="_blank" rel="noopener" title="'+t+' - read the paper at SwoleQuest University">'+c+' &#8599;</a>';}
+function R(c,t){return '<a class="ref" href="https://bjepp77.github.io/swolequest/#university" target="_blank" rel="noopener" title="'+t+' - read the paper at SwoleQuest University">'+c+' &#8599;</a>';}
 // --- GUIDE ---
 function renderGuide(){
   const el=document.getElementById('guideBody');
@@ -2802,7 +2804,7 @@ function renderMore(){
   h+='<div class="quote">Strength is specific to load - the top set is the point. '+R('LOADS','Schoenfeld 2017 - low vs high load')+'</div>';
   h+='<div class="quote">Slow warmups = lighter day. That\'s the system working, not you failing. '+R('RPE-USE','Helms 2016 - programming with RIR/RPE')+'</div>';
   h+='<div class="quote">Hypertrophy days feed the strength days. More muscle, bigger ceiling. '+R('TENSION','Schoenfeld 2010 - mechanisms of hypertrophy')+'</div></div>';
-  h+='<a class="btn ghost" href="https://bjepp77.github.io/forge-hub/#university" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:10px;text-decoration:none">Read the research - SwoleQuest University &#8599;</a>';
+  h+='<a class="btn ghost" href="https://bjepp77.github.io/swolequest/#university" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:10px;text-decoration:none">Read the research - SwoleQuest University &#8599;</a>';
   // settings
   const s=state.set;
   h+='<div class="pagetop" style="padding:18px 0 4px"><h2>Settings</h2></div>';
