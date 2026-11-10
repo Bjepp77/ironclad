@@ -2419,7 +2419,7 @@ function targetWeight(ex){
   const wlo=rnd(rm*lo/100),whi=rnd(rm*hi/100);
   return lo===hi?{w:wlo,label:fmtW(wlo)+' '+state.set.unit}:{w:wlo,whi,label:fmtW(wlo)+'-'+fmtW(whi)+' '+state.set.unit};
 }
-function repRange(r){let m=String(r).match(/^(\d+)-(\d+)$/);if(m)return[+m[1],+m[2]];m=String(r).match(/^(\d+)$/);if(m)return[+m[1],+m[1]];return null;}
+function repRange(r){r=String(r).replace(/\s*\/\s*[a-z]+$/i,'');let m=String(r).match(/^(\d+)-(\d+)$/);if(m)return[+m[1],+m[2]];m=String(r).match(/^(\d+)$/);if(m)return[+m[1],+m[1]];return null;}
 function e1rm(w,r){w=parseFloat(w);r=parseFloat(r);if(!w||!r)return 0;return r===1?w:w*(1+r/30);}
 function isBodyweightish(n){return /PULL-UP|CHIN-UP|DIP|PUSH-UP/.test(n);}
 
@@ -2599,7 +2599,7 @@ function renderToday(){
   let h='<div class="todayMeta" style="margin-top:14px"><span class="chip red">'+esc(it.w.label)+'</span><span class="chip">'+esc(it.w.kind)+'</span><span class="chip">'+doneWorkouts()+'/'+totalWorkouts()+' workouts done</span></div>';
   h+='<div style="background:var(--card2);border-radius:6px;height:6px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--red)"></div></div>';
   if(it.w.semi)h+='<div class="salmonband"><b>Semi-deload.</b> Avoid failure, train lighter, lock in technique. One heavy squat single stays in Lower #2.</div>';
-  if(it.w.deload)h+='<div class="salmonband"><b>Full deload.</b> Keep RPEs low, move well, recover. Then re-run Week 1 with your new 1RMs.</div>';
+  if(it.w.deload||it.w.kind==='Deload')h+='<div class="salmonband"><b>Full deload.</b> Keep RPEs low, move well, recover. Then re-run Week 1 with your new 1RMs.</div>';
   if(it.rest){
     h+='<div class="card"><div class="kicker">Up next</div><h2 style="font-size:24px;margin:6px 0">Rest Day</h2><p class="small" style="font-size:14px">Recovery is part of the program. Sleep, eat, walk. Come back fresh.</p><div class="btnrow"><button class="btn" onclick="finishRest()">Take the rest day</button><button class="btn ghost" onclick="skipRest()">Train anyway</button></div></div>';
   }else{
