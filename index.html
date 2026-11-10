@@ -2686,8 +2686,8 @@ function draftFor(xi){
   return state.draft[key][xi];
 }
 function numStr(v){return String(v==null?'':v).replace(/^(\s*\d+),(\d{1,2}\s*)$/,'$1.$2');}
-function rowSync(ed,i,el){try{const ins=el.closest('tr').querySelectorAll('input');ed.vals[i]={w:numStr(ins[0].value),r:numStr(ins[1].value)};}catch(e){}}
-function setVal(xi,i,f,v,el){const ed=draftFor(xi);if(!ed.vals[i])ed.vals[i]={w:'',r:''};if(el)rowSync(ed,i,el);ed.vals[i][f]=numStr(v);save();}
+function rowSync(ed,i,el){try{const ins=el.closest('tr').querySelectorAll('input');ed.vals[i]={w:numStr(ins[0].value),r:ins[1].value};}catch(e){}}
+function setVal(xi,i,f,v,el){const ed=draftFor(xi);if(!ed.vals[i])ed.vals[i]={w:'',r:''};if(el)rowSync(ed,i,el);ed.vals[i][f]=f==='w'?numStr(v):v;save();}
 function setDone(xi,i,c,el){const ed=draftFor(xi);if(c&&el)rowSync(ed,i,el);ed.done[i]=c;save();if(c){var _ex=exAt(xi);if(_ex){var _s=parseRest(_ex.rest);if(_s>0)rtSet(_s,_ex.n,true);else rtSet(0,'NO REST - GO!',false);}}}
 function addSet(xi){const ed=draftFor(xi);ed.n=(ed.n||0)+1;save();renderWorkout();}
 function pickVar(n,label){state.vars[n]=label;save();renderWorkout();}
