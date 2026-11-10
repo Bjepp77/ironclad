@@ -2385,9 +2385,17 @@ const LS='swolequest.ironclad.v1';
 /* one-time key migration: forge.* -> swolequest.* (2026-09-11 rename) */
 try{const _o='forge.ironclad.v1',_v=localStorage.getItem(_o);if(_v!==null){if(localStorage.getItem(LS)===null)localStorage.setItem(LS,_v);localStorage.removeItem(_o);}}catch(e){}
 let state=load();
-function load(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.v===1)return s;}catch(e){}
-  return {v:1,pos:0,done:{},draft:{},lastByEx:{},history:[],vars:{},set:{unit:'lb',w10:'10A',rm:{squat:'',bench:'',deadlift:'',ohp:''}}};}
-function save(){localStorage.setItem(LS,JSON.stringify(state));}
+function fresh(){return {v:1,pos:0,done:{},draft:{},lastByEx:{},history:[],vars:{},set:{unit:'lb',w10:'10A',rm:{squat:'',bench:'',deadlift:'',ohp:''}}};}
+function load(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.v===1)return normState(s);}catch(e){}
+  return fresh();}
+function isObj(x){return !!x&&typeof x==='object'&&!Array.isArray(x);}
+function normState(s){const b=fresh(),t=isObj(s.set)?s.set:{};
+  const r={v:1,pos:(Number.isInteger(s.pos)&&s.pos>=0)?s.pos:0,done:isObj(s.done)?s.done:b.done,draft:isObj(s.draft)?s.draft:b.draft,lastByEx:{},
+    history:(Array.isArray(s.history)?s.history:[]).filter(h=>isObj(h)&&Array.isArray(h.ex)),vars:isObj(s.vars)?s.vars:b.vars};
+  if(isObj(s.lastByEx))Object.keys(s.lastByEx).forEach(k=>{const e=s.lastByEx[k];if(isObj(e)&&Array.isArray(e.sets))r.lastByEx[k]=e;});
+  r.set=Object.assign({},b.set,t);r.set.rm=Object.assign({},b.set.rm,isObj(t.rm)?t.rm:{});if(r.set.unit!=='kg')r.set.unit='lb';
+  return r;}
+function save(){try{localStorage.setItem(LS,JSON.stringify(state));return true;}catch(e){try{toast('Could not save - export your data now');}catch(e2){}return false;}}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2400);}
 
@@ -2411,7 +2419,7 @@ function targetWeight(ex){
   const wlo=rnd(rm*lo/100),whi=rnd(rm*hi/100);
   return lo===hi?{w:wlo,label:fmtW(wlo)+' '+state.set.unit}:{w:wlo,whi,label:fmtW(wlo)+'-'+fmtW(whi)+' '+state.set.unit};
 }
-function repRange(r){let m=String(r).match(/^(\d+)-(\d+)$/);if(m)return[+m[1],+m[2]];m=String(r).match(/^(\d+)$/);if(m)return[+m[1],+m[1]];return null;}
+function repRange(r){r=String(r).replace(/\s*\/\s*[a-z]+$/i,'');let m=String(r).match(/^(\d+)-(\d+)$/);if(m)return[+m[1],+m[2]];m=String(r).match(/^(\d+)$/);if(m)return[+m[1],+m[1]];return null;}
 function e1rm(w,r){w=parseFloat(w);r=parseFloat(r);if(!w||!r)return 0;return r===1?w:w*(1+r/30);}
 function isBodyweightish(n){return /PULL-UP|CHIN-UP|DIP|PUSH-UP/.test(n);}
 
@@ -2423,12 +2431,12 @@ function strKey(n){return String(n).toUpperCase().replace(/\([^)]*\)/g,'').repla
 function strWrite(name,w,r,unit,src){
   if(!(parseFloat(w)>0))return;
   const s=strLoad();const k=strKey(name);if(!k)return;
-  const rec={w:parseFloat(w),r:parseFloat(r)||null,date:new Date().toISOString().slice(0,10),unit:unit||'lb',src:src};
+  const rec={w:parseFloat(w),r:parseFloat(r)||null,date:(function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');})(new Date()),unit:unit||'lb',src:src};
   const cur=s.ex[k];
-  if(!cur||rec.w>cur.w||rec.date>cur.date){s.ex[k]=rec;try{localStorage.setItem(SQSTR,JSON.stringify(s));}catch(e){}}
+  if(!cur||((cur.unit||'lb')!==rec.unit?rec.date>=cur.date:(rec.w>cur.w||rec.date>cur.date))){s.ex[k]=rec;try{localStorage.setItem(SQSTR,JSON.stringify(s));}catch(e){}}
 }
 function strLookup(name){return strLoad().ex[strKey(name)]||null;}
-function strToLast(name){const r=strLookup(name);return r?{bestW:r.w,allTop:false,sets:[],date:r.date,src:r.src}:null;}
+function strToLast(name){const r=strLookup(name);return r&&(r.unit||'lb')===state.set.unit?{bestW:r.w,allTop:false,sets:[],date:r.date,src:r.src}:null;}
 
 // --- progression engine ---
 // Primaries: %1RM fixed by the week (progression is periodized in). Accessories: double progression -
@@ -2571,7 +2579,7 @@ function rtTick(){RT.left=Math.max(0,RT.sec-(Date.now()-RT.at)/1000);rtPaint();i
 function rtBeep(){try{var C=window.AudioContext||window.webkitAudioContext;var c=new C();var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.setValueAtTime(.2,c.currentTime);o.start();o.stop(c.currentTime+.35);}catch(e){}}
 function rtPaint(){var t=document.getElementById('rtTxt');if(!t)return;if(RT.sec<=0){t.innerHTML='<span class="rtex">'+RT.label+'</span>';return;}var l=Math.ceil(RT.left),m=Math.floor(l/60),s=l%60;t.innerHTML=(RT.label?'<span class="rtex">'+RT.label+'</span>':'')+'REST '+m+':'+(s<10?'0':'')+s;}
 function rtToggle(e){e.stopPropagation();if(RT.sec<=0)return;if(RT.t){RT.left=Math.max(0,RT.sec-(Date.now()-RT.at)/1000);RT.sec=RT.left;rtStop();rtPaint();}else{RT.sec=RT.left;rtStart();}}
-function rtBump(e,n){e.stopPropagation();if(RT.t){RT.sec=Math.max(0,RT.sec+n);RT.at=Date.now();}else{RT.sec=Math.max(0,RT.sec+n);RT.left=RT.sec;}rtPaint();}
+function rtBump(e,n){e.stopPropagation();if(RT.t){RT.sec=Math.max(0,RT.sec+n);}else{RT.sec=Math.max(0,RT.left+n);RT.left=RT.sec;}rtPaint();}
 function rtClose(e){e.stopPropagation();rtStop();var el=document.getElementById('restTimer');if(el)el.classList.remove('show');el.classList.remove('done');}
 /* === END ALTERNATES + TIMER === */
 
@@ -2591,7 +2599,7 @@ function renderToday(){
   let h='<div class="todayMeta" style="margin-top:14px"><span class="chip red">'+esc(it.w.label)+'</span><span class="chip">'+esc(it.w.kind)+'</span><span class="chip">'+doneWorkouts()+'/'+totalWorkouts()+' workouts done</span></div>';
   h+='<div style="background:var(--card2);border-radius:6px;height:6px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--red)"></div></div>';
   if(it.w.semi)h+='<div class="salmonband"><b>Semi-deload.</b> Avoid failure, train lighter, lock in technique. One heavy squat single stays in Lower #2.</div>';
-  if(it.w.deload)h+='<div class="salmonband"><b>Full deload.</b> Keep RPEs low, move well, recover. Then re-run Week 1 with your new 1RMs.</div>';
+  if(it.w.deload||it.w.kind==='Deload')h+='<div class="salmonband"><b>Full deload.</b> Keep RPEs low, move well, recover. Then re-run Week 1 with your new 1RMs.</div>';
   if(it.rest){
     h+='<div class="card"><div class="kicker">Up next</div><h2 style="font-size:24px;margin:6px 0">Rest Day</h2><p class="small" style="font-size:14px">Recovery is part of the program. Sleep, eat, walk. Come back fresh.</p><div class="btnrow"><button class="btn" onclick="finishRest()">Take the rest day</button><button class="btn ghost" onclick="skipRest()">Train anyway</button></div></div>';
   }else{
@@ -2658,9 +2666,9 @@ function renderWorkout(){
       }
       const done=ed.done&&ed.done[i];
       h+='<tr><td></td><td class="setnum">'+(i+1)+'</td>'+
-        '<td><input inputmode="decimal" value="'+esc(pw==null?'':pw)+'" placeholder="-" onchange="setVal('+xi+','+i+',\'w\',this.value)"></td>'+
-        '<td><input inputmode="decimal" value="'+esc(pr==null?'':pr)+'" placeholder="'+(ex.amrap?'AMRAP':'-')+'" onchange="setVal('+xi+','+i+',\'r\',this.value)"></td>'+
-        '<td><input type="checkbox" class="setdone" '+(done?'checked':'')+' onchange="setDone('+xi+','+i+',this.checked)"></td></tr>';
+        '<td><input inputmode="decimal" value="'+esc(pw==null?'':pw)+'" placeholder="-" onchange="setVal('+xi+','+i+',\'w\',this.value,this)"></td>'+
+        '<td><input inputmode="decimal" value="'+esc(pr==null?'':pr)+'" placeholder="'+(ex.amrap?'AMRAP':'-')+'" onchange="setVal('+xi+','+i+',\'r\',this.value,this)"></td>'+
+        '<td><input type="checkbox" class="setdone" '+(done?'checked':'')+' onchange="setDone('+xi+','+i+',this.checked,this)"></td></tr>';
     }
     h+='</table><button class="btn ghost sm" style="margin-top:8px" onclick="addSet('+xi+')">+ Add set</button>';
     h+='</div>';
@@ -2675,13 +2683,15 @@ function draftFor(xi){
   if(!state.draft[key][xi])state.draft[key][xi]={vals:[],done:[],n:weeks()[WO.wi].days[WO.di].ex[xi].s};
   return state.draft[key][xi];
 }
-function setVal(xi,i,f,v){const ed=draftFor(xi);if(!ed.vals[i])ed.vals[i]={w:'',r:''};ed.vals[i][f]=v;save();}
-function setDone(xi,i,c){const ed=draftFor(xi);ed.done[i]=c;save();if(c){var _ex=exAt(xi);if(_ex){var _s=parseRest(_ex.rest);if(_s>0)rtSet(_s,_ex.n,true);else rtSet(0,'NO REST - GO!',false);}}}
+function rowSync(ed,i,el){try{const ins=el.closest('tr').querySelectorAll('input');ed.vals[i]={w:ins[0].value,r:ins[1].value};}catch(e){}}
+function setVal(xi,i,f,v,el){const ed=draftFor(xi);if(!ed.vals[i])ed.vals[i]={w:'',r:''};if(el)rowSync(ed,i,el);ed.vals[i][f]=v;save();}
+function setDone(xi,i,c,el){const ed=draftFor(xi);if(c&&el)rowSync(ed,i,el);ed.done[i]=c;save();if(c){var _ex=exAt(xi);if(_ex){var _s=parseRest(_ex.rest);if(_s>0)rtSet(_s,_ex.n,true);else rtSet(0,'NO REST - GO!',false);}}}
 function addSet(xi){const ed=draftFor(xi);ed.n=(ed.n||0)+1;save();renderWorkout();}
 function pickVar(n,label){state.vars[n]=label;save();renderWorkout();}
 function completeWorkout(){
   const w=weeks()[WO.wi],d=w.days[WO.di];const key=seqKey({w,di:WO.di});
   const draft=state.draft[key]||{};
+  document.querySelectorAll('input.setdone:checked').forEach(cb=>{const m=/setDone\((\d+),(\d+)/.exec(cb.getAttribute('onchange')||'');const ed=m&&draft[+m[1]];if(!ed)return;if(!ed.vals)ed.vals=[];const v=ed.vals[+m[2]];if(!v||(!v.w&&!v.r))rowSync(ed,+m[2],cb);});
   const exLog=[];
   d.ex.forEach((ex,xi)=>{
     const ed=draft[xi];if(!ed)return;
@@ -2776,7 +2786,7 @@ function chartSVG(name){
     '<path d="'+line+'" fill="none" stroke="#c8262b" stroke-width="2.5"/>'+dots+'</svg>';
 }
 
-function R(c,t){return '<a class="ref" href="https://bjepp77.github.io/swolequest/#university" target="_blank" rel="noopener" title="'+t+' - read the paper at SwoleQuest University">'+c+' &#8599;</a>';}
+function R(c,t){return '<a class="ref" href="../swolequest/#university" target="_blank" rel="noopener" title="'+t+' - read the paper at SwoleQuest University">'+c+' &#8599;</a>';}
 // --- GUIDE ---
 function renderGuide(){
   const el=document.getElementById('guideBody');
@@ -2804,7 +2814,7 @@ function renderMore(){
   h+='<div class="quote">Strength is specific to load - the top set is the point. '+R('LOADS','Schoenfeld 2017 - low vs high load')+'</div>';
   h+='<div class="quote">Slow warmups = lighter day. That\'s the system working, not you failing. '+R('RPE-USE','Helms 2016 - programming with RIR/RPE')+'</div>';
   h+='<div class="quote">Hypertrophy days feed the strength days. More muscle, bigger ceiling. '+R('TENSION','Schoenfeld 2010 - mechanisms of hypertrophy')+'</div></div>';
-  h+='<a class="btn ghost" href="https://bjepp77.github.io/swolequest/#university" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:10px;text-decoration:none">Read the research - SwoleQuest University &#8599;</a>';
+  h+='<a class="btn ghost" href="../swolequest/#university" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:10px;text-decoration:none">Read the research - SwoleQuest University &#8599;</a>';
   // settings
   const s=state.set;
   h+='<div class="pagetop" style="padding:18px 0 4px"><h2>Settings</h2></div>';
@@ -2823,14 +2833,19 @@ function setUnit(u){state.set.unit=u;save();renderAll();}
 function setW10(v){state.set.w10=v;const s=seq();if(state.pos>=s.length)state.pos=s.length-1;save();renderAll();}
 function setRM(k,v){state.set.rm[k]=v;save();toast(k.toUpperCase()+' 1RM saved');}
 function exportData(){
-  const j=JSON.stringify(state);
+  const j=JSON.stringify(Object.assign({app:'ironclad'},state));
   const box=document.getElementById('ioBox');if(box)box.value=j;
   try{const b=new Blob([j],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ironclad-backup.json';a.click();}catch(e){}
   toast('Backup exported');
 }
 function importData(){
   const box=document.getElementById('ioBox');if(!box||!box.value.trim()){toast('Paste a backup into the box first');return;}
-  try{const s=JSON.parse(box.value);if(!s||s.v!==1)throw 0;state=s;save();renderAll();toast('Backup restored');}catch(e){toast('That backup did not parse');}
+  let s;try{s=JSON.parse(box.value);}catch(e){toast('That backup did not parse - nothing changed');return;}
+  if(!isObj(s)||s.v!==1||!Array.isArray(s.history)||s.history.some(h=>!isObj(h)||!Array.isArray(h.ex))||!isObj(s.done)||!isObj(s.lastByEx)||(s.app&&s.app!=='ironclad')){toast('That is not a Ironclad backup - nothing changed');return;}
+  if(!confirm('Replace all current Ironclad data on this device with this backup?'))return;
+  const old=state;
+  try{state=normState(s);renderAll();if(!save())throw 0;toast('Backup restored');}
+  catch(e){state=old;try{save();renderAll();}catch(e2){}toast('Restore failed - your previous data is kept');}
 }
 function resetAll(){if(confirm('Delete all logs, settings and progress on this device?')){localStorage.removeItem(LS);state=load();save();renderAll();showView('today');toast('Fresh start');}}
 
