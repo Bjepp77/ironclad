@@ -2427,7 +2427,7 @@ function isBodyweightish(n){return /PULL-UP|CHIN-UP|DIP|PUSH-UP/.test(n);}
 // --- shared strength layer (cross-program suggestions; reads/writes swolequest.strength.v1, never touches program stores) ---
 const SQSTR='swolequest.strength.v1';
 function strLoad(){try{const s=JSON.parse(localStorage.getItem(SQSTR));if(s&&s.v===1&&s.ex)return s;}catch(e){} return {v:1,ex:{}};}
-function strKey(n){return String(n).toUpperCase().replace(/\([^)]*\)/g,'').replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').trim();}
+function strKey(n){return (/\(\s*BACK-OFF\s*\)/i.test(String(n))?'BACKOFF ':'')+String(n).toUpperCase().replace(/\([^)]*\)/g,'').replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').trim();}
 function strWrite(name,w,r,unit,src){
   if(!(parseFloat(w)>0))return;
   const s=strLoad();const k=strKey(name);if(!k)return;
