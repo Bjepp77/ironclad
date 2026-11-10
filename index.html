@@ -2385,9 +2385,17 @@ const LS='swolequest.ironclad.v1';
 /* one-time key migration: forge.* -> swolequest.* (2026-09-11 rename) */
 try{const _o='forge.ironclad.v1',_v=localStorage.getItem(_o);if(_v!==null){if(localStorage.getItem(LS)===null)localStorage.setItem(LS,_v);localStorage.removeItem(_o);}}catch(e){}
 let state=load();
-function load(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.v===1)return s;}catch(e){}
-  return {v:1,pos:0,done:{},draft:{},lastByEx:{},history:[],vars:{},set:{unit:'lb',w10:'10A',rm:{squat:'',bench:'',deadlift:'',ohp:''}}};}
-function save(){localStorage.setItem(LS,JSON.stringify(state));}
+function fresh(){return {v:1,pos:0,done:{},draft:{},lastByEx:{},history:[],vars:{},set:{unit:'lb',w10:'10A',rm:{squat:'',bench:'',deadlift:'',ohp:''}}};}
+function load(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.v===1)return normState(s);}catch(e){}
+  return fresh();}
+function isObj(x){return !!x&&typeof x==='object'&&!Array.isArray(x);}
+function normState(s){const b=fresh(),t=isObj(s.set)?s.set:{};
+  const r={v:1,pos:(Number.isInteger(s.pos)&&s.pos>=0)?s.pos:0,done:isObj(s.done)?s.done:b.done,draft:isObj(s.draft)?s.draft:b.draft,lastByEx:{},
+    history:(Array.isArray(s.history)?s.history:[]).filter(h=>isObj(h)&&Array.isArray(h.ex)),vars:isObj(s.vars)?s.vars:b.vars};
+  if(isObj(s.lastByEx))Object.keys(s.lastByEx).forEach(k=>{const e=s.lastByEx[k];if(isObj(e)&&Array.isArray(e.sets))r.lastByEx[k]=e;});
+  r.set=Object.assign({},b.set,t);r.set.rm=Object.assign({},b.set.rm,isObj(t.rm)?t.rm:{});if(r.set.unit!=='kg')r.set.unit='lb';
+  return r;}
+function save(){try{localStorage.setItem(LS,JSON.stringify(state));return true;}catch(e){try{toast('Could not save - export your data now');}catch(e2){}return false;}}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2400);}
 
@@ -2825,14 +2833,19 @@ function setUnit(u){state.set.unit=u;save();renderAll();}
 function setW10(v){state.set.w10=v;const s=seq();if(state.pos>=s.length)state.pos=s.length-1;save();renderAll();}
 function setRM(k,v){state.set.rm[k]=v;save();toast(k.toUpperCase()+' 1RM saved');}
 function exportData(){
-  const j=JSON.stringify(state);
+  const j=JSON.stringify(Object.assign({app:'ironclad'},state));
   const box=document.getElementById('ioBox');if(box)box.value=j;
   try{const b=new Blob([j],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ironclad-backup.json';a.click();}catch(e){}
   toast('Backup exported');
 }
 function importData(){
   const box=document.getElementById('ioBox');if(!box||!box.value.trim()){toast('Paste a backup into the box first');return;}
-  try{const s=JSON.parse(box.value);if(!s||s.v!==1)throw 0;state=s;save();renderAll();toast('Backup restored');}catch(e){toast('That backup did not parse');}
+  let s;try{s=JSON.parse(box.value);}catch(e){toast('That backup did not parse - nothing changed');return;}
+  if(!isObj(s)||s.v!==1||!Array.isArray(s.history)||!isObj(s.done)||!isObj(s.lastByEx)||(s.app&&s.app!=='ironclad')){toast('That is not a Ironclad backup - nothing changed');return;}
+  if(!confirm('Replace all current Ironclad data on this device with this backup?'))return;
+  const old=state;
+  try{state=normState(s);renderAll();if(!save())throw 0;toast('Backup restored');}
+  catch(e){state=old;try{save();renderAll();}catch(e2){}toast('Restore failed - your previous data is kept');}
 }
 function resetAll(){if(confirm('Delete all logs, settings and progress on this device?')){localStorage.removeItem(LS);state=load();save();renderAll();showView('today');toast('Fresh start');}}
 
