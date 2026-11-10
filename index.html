@@ -2441,6 +2441,7 @@ function strToLast(name){const r=strLookup(name);return r&&(r.unit||'lb')===stat
 // --- progression engine ---
 // Primaries: %1RM fixed by the week (progression is periodized in). Accessories: double progression -
 // add reps to the top of the range, then add the minimum weight and drop back to the bottom.
+function inDeload(){try{const w=weeks()[WO.wi];return !!(w&&(w.deload||w.semi||w.kind==='Deload'));}catch(e){return false;}}
 function progressionHint(ex){
   if(ex.p&&ex.l){
     const t=targetWeight(ex);
@@ -2452,6 +2453,7 @@ function progressionHint(ex){
   if(!rr||!last)return null;
   const hi=rr[1];
   const w=last.bestW;
+  if(inDeload()&&w)return 'Deload week: stay at or below '+fmtW(w)+' '+state.set.unit+' and keep every set easy.';
   if(last.allTop&&w){
     const inc=isBodyweightish(ex.n)?(state.set.unit==='kg'?1.25:2.5):(state.set.unit==='kg'?2.5:5);
     return 'Progression: you hit the top of the range on every set last time - go up to '+fmtW(w+inc)+' '+state.set.unit+' and build back to '+hi+' reps.';
@@ -2478,7 +2480,7 @@ function suggestedLine(ex){
   const w=last.bestW;
   const inc=isBodyweightish(ex.n)?(state.set.unit==='kg'?1.25:2.5):(state.set.unit==='kg'?2.5:5);
   if(sh)return 'SUGGESTED TODAY: '+fmtW(w)+' '+state.set.unit.toUpperCase()+' (FROM YOUR '+sh.src+' LOG - LOG IT HERE TO START PROGRESSION)';
-  if(last.allTop)return 'SUGGESTED TODAY: '+fmtW(w+inc)+' '+state.set.unit.toUpperCase()+' (UP FROM '+fmtW(w)+' - YOU HIT THE TOP OF THE RANGE)';
+  if(last.allTop&&!inDeload())return 'SUGGESTED TODAY: '+fmtW(w+inc)+' '+state.set.unit.toUpperCase()+' (UP FROM '+fmtW(w)+' - YOU HIT THE TOP OF THE RANGE)';
   return 'SUGGESTED TODAY: '+fmtW(w)+' '+state.set.unit.toUpperCase()+' (ADD REPS UNTIL EVERY SET HITS '+rr[1]+')';
 }
 
