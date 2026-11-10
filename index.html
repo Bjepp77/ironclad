@@ -2427,7 +2427,7 @@ function isBodyweightish(n){return /PULL-UP|CHIN-UP|DIP|PUSH-UP/.test(n);}
 // --- shared strength layer (cross-program suggestions; reads/writes swolequest.strength.v1, never touches program stores) ---
 const SQSTR='swolequest.strength.v1';
 function strLoad(){try{const s=JSON.parse(localStorage.getItem(SQSTR));if(s&&s.v===1&&s.ex)return s;}catch(e){} return {v:1,ex:{}};}
-function strKey(n){return String(n).toUpperCase().replace(/\([^)]*\)/g,'').replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').trim();}
+function strKey(n){return (/\(\s*BACK-OFF\s*\)/i.test(String(n))?'BACKOFF ':'')+String(n).toUpperCase().replace(/\([^)]*\)/g,'').replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').trim();}
 function strWrite(name,w,r,unit,src){
   if(!(parseFloat(w)>0))return;
   const s=strLoad();const k=strKey(name);if(!k)return;
@@ -2441,6 +2441,7 @@ function strToLast(name){const r=strLookup(name);return r&&(r.unit||'lb')===stat
 // --- progression engine ---
 // Primaries: %1RM fixed by the week (progression is periodized in). Accessories: double progression -
 // add reps to the top of the range, then add the minimum weight and drop back to the bottom.
+function inDeload(){try{const w=weeks()[WO.wi];return !!(w&&(w.deload||w.semi||w.kind==='Deload'));}catch(e){return false;}}
 function progressionHint(ex){
   if(ex.p&&ex.l){
     const t=targetWeight(ex);
@@ -2452,6 +2453,7 @@ function progressionHint(ex){
   if(!rr||!last)return null;
   const hi=rr[1];
   const w=last.bestW;
+  if(inDeload()&&w)return 'Deload week: stay at or below '+fmtW(w)+' '+state.set.unit+' and keep every set easy.';
   if(last.allTop&&w){
     const inc=isBodyweightish(ex.n)?(state.set.unit==='kg'?1.25:2.5):(state.set.unit==='kg'?2.5:5);
     return 'Progression: you hit the top of the range on every set last time - go up to '+fmtW(w+inc)+' '+state.set.unit+' and build back to '+hi+' reps.';
@@ -2478,7 +2480,7 @@ function suggestedLine(ex){
   const w=last.bestW;
   const inc=isBodyweightish(ex.n)?(state.set.unit==='kg'?1.25:2.5):(state.set.unit==='kg'?2.5:5);
   if(sh)return 'SUGGESTED TODAY: '+fmtW(w)+' '+state.set.unit.toUpperCase()+' (FROM YOUR '+sh.src+' LOG - LOG IT HERE TO START PROGRESSION)';
-  if(last.allTop)return 'SUGGESTED TODAY: '+fmtW(w+inc)+' '+state.set.unit.toUpperCase()+' (UP FROM '+fmtW(w)+' - YOU HIT THE TOP OF THE RANGE)';
+  if(last.allTop&&!inDeload())return 'SUGGESTED TODAY: '+fmtW(w+inc)+' '+state.set.unit.toUpperCase()+' (UP FROM '+fmtW(w)+' - YOU HIT THE TOP OF THE RANGE)';
   return 'SUGGESTED TODAY: '+fmtW(w)+' '+state.set.unit.toUpperCase()+' (ADD REPS UNTIL EVERY SET HITS '+rr[1]+')';
 }
 
@@ -2568,7 +2570,7 @@ hb(['CABLE EXTERNAL ROTATION'],'Side-lying external rotation with a water bottle
 function hbwNorm(n){return String(n).toUpperCase().replace(/\s*\(.*?\)/g,'').replace(/\s+/g,' ').trim();}
 function homeBwFor(ex){var i,k,keys=[hbwNorm(ex.n)];if(ex.vars)ex.vars.forEach(function(v){keys.push(hbwNorm(v.label));});for(i=0;i<keys.length;i++){if(HOMEBW[keys[i]])return HOMEBW[keys[i]];}for(i=0;i<keys.length;i++){k=keys[i].replace(/ OR .*/,'');if(HOMEBW[k])return HOMEBW[k];}return null;}
 var RT={sec:0,left:0,at:0,t:null,label:''};
-function parseRest(s){if(!s)return 0;s=String(s);var m;if(/min/i.test(s)){m=s.match(/([\d.]+)/);return m?Math.round(parseFloat(m[1])*60):0;}m=s.match(/([\d.]+)/);return m?Math.round(parseFloat(m[1])):0;}
+function parseRest(s){if(!s)return 0;s=String(s);var n=s.match(/[\d.]+/g);if(!n)return 0;var v=Math.max.apply(null,n.map(parseFloat));return Math.round(/min/i.test(s)?v*60:v);}
 function exAt(xi){try{return weeks()[WO.wi].days[WO.di].ex[xi];}catch(e){return null;}}
 function rtEl(){var el=document.getElementById('restTimer');if(!el){el=document.createElement('div');el.id='restTimer';el.innerHTML='<div id="rtTxt" onclick="rtToggle(event)">REST --:--</div><div class="rtb"><button onclick="rtBump(event,30)">+30</button><button onclick="rtBump(event,-30)">-30</button><button onclick="rtClose(event)">&times;</button></div>';document.body.appendChild(el);}return el;}
 function timerPreset(xi){var ex=exAt(xi);if(!ex)return;var s=parseRest(ex.rest);if(s>0)rtSet(s,ex.n,false);}
@@ -2666,9 +2668,9 @@ function renderWorkout(){
       }
       const done=ed.done&&ed.done[i];
       h+='<tr><td></td><td class="setnum">'+(i+1)+'</td>'+
-        '<td><input inputmode="decimal" value="'+esc(pw==null?'':pw)+'" placeholder="-" onchange="setVal('+xi+','+i+',\'w\',this.value,this)"></td>'+
-        '<td><input inputmode="decimal" value="'+esc(pr==null?'':pr)+'" placeholder="'+(ex.amrap?'AMRAP':'-')+'" onchange="setVal('+xi+','+i+',\'r\',this.value,this)"></td>'+
-        '<td><input type="checkbox" class="setdone" '+(done?'checked':'')+' onchange="setDone('+xi+','+i+',this.checked,this)"></td></tr>';
+        '<td><input inputmode="decimal" aria-label="Set '+(i+1)+' weight" value="'+esc(pw==null?'':pw)+'" placeholder="-" onchange="setVal('+xi+','+i+',\'w\',this.value,this)"></td>'+
+        '<td><input inputmode="decimal" aria-label="Set '+(i+1)+' reps" value="'+esc(pr==null?'':pr)+'" placeholder="'+(ex.amrap?'AMRAP':'-')+'" onchange="setVal('+xi+','+i+',\'r\',this.value,this)"></td>'+
+        '<td><input type="checkbox" class="setdone" aria-label="Set '+(i+1)+' done" '+(done?'checked':'')+' onchange="setDone('+xi+','+i+',this.checked,this)"></td></tr>';
     }
     h+='</table><button class="btn ghost sm" style="margin-top:8px" onclick="addSet('+xi+')">+ Add set</button>';
     h+='</div>';
@@ -2683,8 +2685,9 @@ function draftFor(xi){
   if(!state.draft[key][xi])state.draft[key][xi]={vals:[],done:[],n:weeks()[WO.wi].days[WO.di].ex[xi].s};
   return state.draft[key][xi];
 }
-function rowSync(ed,i,el){try{const ins=el.closest('tr').querySelectorAll('input');ed.vals[i]={w:ins[0].value,r:ins[1].value};}catch(e){}}
-function setVal(xi,i,f,v,el){const ed=draftFor(xi);if(!ed.vals[i])ed.vals[i]={w:'',r:''};if(el)rowSync(ed,i,el);ed.vals[i][f]=v;save();}
+function numStr(v){return String(v==null?'':v).replace(/^(\s*\d+),(\d{1,2}\s*)$/,'$1.$2');}
+function rowSync(ed,i,el){try{const ins=el.closest('tr').querySelectorAll('input');ed.vals[i]={w:numStr(ins[0].value),r:ins[1].value};}catch(e){}}
+function setVal(xi,i,f,v,el){const ed=draftFor(xi);if(!ed.vals[i])ed.vals[i]={w:'',r:''};if(el)rowSync(ed,i,el);ed.vals[i][f]=f==='w'?numStr(v):v;save();}
 function setDone(xi,i,c,el){const ed=draftFor(xi);if(c&&el)rowSync(ed,i,el);ed.done[i]=c;save();if(c){var _ex=exAt(xi);if(_ex){var _s=parseRest(_ex.rest);if(_s>0)rtSet(_s,_ex.n,true);else rtSet(0,'NO REST - GO!',false);}}}
 function addSet(xi){const ed=draftFor(xi);ed.n=(ed.n||0)+1;save();renderWorkout();}
 function pickVar(n,label){state.vars[n]=label;save();renderWorkout();}
@@ -2757,7 +2760,7 @@ function renderHistory(){
   const main=['BACK SQUAT','BARBELL BENCH PRESS','DEADLIFT','OVERHEAD PRESS'];
   if(!CHARTEX||!names.includes(CHARTEX))CHARTEX=main.find(m=>names.includes(m))||names[0];
   h+='<div class="chartbox"><div class="kicker">Estimated 1RM trend</div>';
-  h+='<div class="field" style="margin:8px 0"><select onchange="CHARTEX=this.value;renderHistory()">'+names.map(n=>'<option '+(n===CHARTEX?'selected':'')+'>'+esc(n)+'</option>').join('')+'</select></div>';
+  h+='<div class="field" style="margin:8px 0"><select aria-label="Exercise to chart" onchange="CHARTEX=this.value;renderHistory()">'+names.map(n=>'<option '+(n===CHARTEX?'selected':'')+'>'+esc(n)+'</option>').join('')+'</select></div>';
   h+=chartSVG(CHARTEX)+'</div>';
   h+=state.history.slice(0,30).map((s,i)=>{
     const totalSets=s.ex.reduce((a,e)=>a+e.sets.length,0);
@@ -2824,7 +2827,7 @@ function renderMore(){
   // backup
   h+='<div class="card"><div class="kicker">Backup &amp; restore</div>';
   h+='<div class="btnrow"><button class="btn ghost" onclick="exportData()">Export data</button><button class="btn ghost" onclick="importData()">Import data</button></div>';
-  h+='<div class="field" style="margin-top:10px"><textarea id="ioBox" rows="4" placeholder="Exported JSON appears here - paste a backup here and tap Import to restore"></textarea></div>';
+  h+='<div class="field" style="margin-top:10px"><textarea id="ioBox" aria-label="Backup data" rows="4" placeholder="Exported JSON appears here - paste a backup here and tap Import to restore"></textarea></div>';
   h+='<div class="divider"></div><button class="btn ghost" style="color:#e08a8d;border-color:#4a2628" onclick="resetAll()">Reset everything</button></div>';
   h+='<p class="small" style="text-align:center;margin-top:14px">All data lives on this device (localStorage). Works offline.</p>';
   el.innerHTML=h;
@@ -2865,6 +2868,9 @@ document.querySelectorAll('.tabbar button').forEach(b=>b.addEventListener('click
 if(window.__HERO__)document.getElementById('heroImg').style.backgroundImage='url('+window.__HERO__+')';
 renderAll();
 
+</script>
+<script>
+try{if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){window.addEventListener('load',function(){try{navigator.serviceWorker.register('sw.js').catch(function(){});}catch(e){}});}}catch(e){}
 </script>
 </body>
 </html>
