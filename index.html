@@ -2841,7 +2841,7 @@ function exportData(){
 function importData(){
   const box=document.getElementById('ioBox');if(!box||!box.value.trim()){toast('Paste a backup into the box first');return;}
   let s;try{s=JSON.parse(box.value);}catch(e){toast('That backup did not parse - nothing changed');return;}
-  if(!isObj(s)||s.v!==1||!Array.isArray(s.history)||!isObj(s.done)||!isObj(s.lastByEx)||(s.app&&s.app!=='ironclad')){toast('That is not a Ironclad backup - nothing changed');return;}
+  if(!isObj(s)||s.v!==1||!Array.isArray(s.history)||s.history.some(h=>!isObj(h)||!Array.isArray(h.ex))||!isObj(s.done)||!isObj(s.lastByEx)||(s.app&&s.app!=='ironclad')){toast('That is not a Ironclad backup - nothing changed');return;}
   if(!confirm('Replace all current Ironclad data on this device with this backup?'))return;
   const old=state;
   try{state=normState(s);renderAll();if(!save())throw 0;toast('Backup restored');}
